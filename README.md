@@ -21,7 +21,9 @@ After Mongo Shell is initiailized, enter the following command.
 ```
 
  After running the script successfully, database `twitter_search` with collection `users` will be created.
+ 
  Login credentials are `username: admin` and `password: admin`.
+ 
  Exit the shell and start the application.
 
 ```
