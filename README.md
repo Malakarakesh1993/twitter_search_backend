@@ -14,7 +14,16 @@ You will need Node.js and MongoDb installed on your environment.
 
 Open Mongo Shell with `mongo` command on the termnial.
 
-After Mongo Shell is initiailized, enter the following command.
+After Mongo Shell is initiailized, enter the following command. 
+
+If you already have database named twitter_search created previously, remove it:
+
+```
+	use twitter_search
+	db.dropDatabase()
+```
+
+Then, run the following script:
 
 ```
 	mongo localhost:27017/twitter_search user_create_script.js
