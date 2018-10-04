@@ -37,7 +37,6 @@ app.post('/signup', function(req, res){
               hobby:'',
               organization_address:'',
               favorite_food:'',
-              skills:'',
               image_url:'',
             }
             dbo.collection('users').insertOne(user_data, function (err, records) {
@@ -118,7 +117,6 @@ app.post('/fetchProfile', verifyToken, function(req, res){
 
 /* search api end-point */
 app.post('/api/', verifyToken, function(req, res) {
-  console.log(req.body);
     var keyword = req.body.keyword;
     // Set up your search parameters
     var params = {
@@ -136,7 +134,6 @@ app.post('/api/', verifyToken, function(req, res) {
       params.include_entities = 'true';
       params.result_type = 'mixed';
     }
-    console.log(params);
 
     T.get('search/tweets', params, function(err, data, response) {
       if(!err){
@@ -147,7 +144,7 @@ app.post('/api/', verifyToken, function(req, res) {
     })
 });
 
-/* favorite tweet */
+/* add to favorite tweet */
 app.post('/favTweet/', verifyToken, function(req, res) {
     let tweet_id = {id: req.body.id};
     dbConn.then( function (database) {
@@ -166,6 +163,7 @@ app.post('/favTweet/', verifyToken, function(req, res) {
     }).catch(function(e){console.log(e)})
 });
 
+/* fetch single tweet */
 app.post('/fetchSingleTweet/', verifyToken, function(req, res) {
   var params = {
     id: req.body.tweet_id
@@ -180,33 +178,39 @@ app.post('/fetchSingleTweet/', verifyToken, function(req, res) {
     })
 });
 
-app.post('/fetchFavoriteTweets/', verifyToken, function(req, res) {
+/* fetch favorite tweets list */
+app.post('/fetchFavoriteTweets/', verifyToken, function (req, res) {
   var favorites = [];
-  dbConn.then( function (database) {
-            var dbo = database.db("twitter_search");
-            dbo.collection('users').findOne(
-              { _id: ObjectId(req.userId) }, function(err, result) {
-                if(err) throw err;
-                if(!result.hasOwnProperty('favorite_tweets')) {
-                  res.status(404).json({msg:'record not found'});
-                } 
-                else {
-                  result.favorite_tweets.forEach(function (tweet) {
-                    T.get('statuses/show', {id: tweet.id}, function(err, data, response) {
-                      if(!err){
-                        favorites.push(data);
-                      } else {
-                        console.log(err);
-                      }
-                    });
-                  });
-                  console.log(favorites); 
-                  // res.status(200).json({msg:'success', data:favorites});
+  dbConn.then(function (database) {
+    var dbo = database.db("twitter_search");
+    dbo.collection('users').findOne(
+      { _id: ObjectId(req.userId) }, function (err, result) {
+        if (err) throw err;
+        if (!result.hasOwnProperty('favorite_tweets')) {
+          res.status(404).json({ msg: 'record not found' });
+        }
+        else {
+          // Counter
+          let count = result.favorite_tweets.length;
+          result.favorite_tweets.forEach(function (tweet) {
+            T.get('statuses/show', { id: tweet.id }, function (err, data, response) {
+              // Decrease count
+              count -= 1;
+              if (!err) {
+                favorites.push(data);
+                // Check if count is zero
+                if (count === 0) {
+                  res.status(200).json({msg:'success', data:favorites});        
                 }
-              });
-    }).catch(function(e){console.log(e)})
+              } else {
+                console.log(err);
+              }
+            });
+          });
+        }
+      });
+  }).catch(function (e) { console.log(e) })
 });
-
 /* server intialization */
 var server = app.listen(4444, function(){
         var host = server.address().address;
